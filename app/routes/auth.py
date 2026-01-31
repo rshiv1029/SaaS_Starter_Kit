@@ -10,6 +10,7 @@ from starlette.requests import Request
 from app.database import get_db
 from app.models.user import User
 from app.utils.security import create_access_token, hash_password, verify_password
+from app.config import settings
 
 templates = Jinja2Templates(directory="app/templates")
 router = APIRouter()
@@ -110,13 +111,14 @@ def login_page_submit(
     
     # Generate JWT token
     token = create_access_token(data={"sub": user.email})
+    max_age_seconds = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     
     response = RedirectResponse(url="/dashboard", status_code=303)
     response.set_cookie(
         key="access_token", 
         value=f"Bearer {token}", 
         httponly=True, 
-        maxage=86400
+        max_age=max_age_seconds
     )
     # For now, just show dashboard (we'll add proper sessions later)
     return response
@@ -129,9 +131,12 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
     try:
         # Decode token and remove 'Bearer ' prefix
         scheme, _, param = token.partition(" ")
-        payload = jwt.decode(param, SECRET_KEY, algorithms=[ALGORITHM])
+        print(param)
+        payload = jwt.decode(param, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             return None
+        user = db.query(User).filter(User.email == email).first()
+        return user
     except JWTError:
         return None

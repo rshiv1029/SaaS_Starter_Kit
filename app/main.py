@@ -18,7 +18,9 @@ app = FastAPI(title="AI SaaS Starter")
 app.include_router(router, prefix="/auth", tags=["auth"])
     
 @app.get("/", response_class=HTMLResponse)
-def home(request: Request):
+async def home(request: Request, user: User = Depends(get_current_user)):
+    if user:
+        return RedirectResponse(url="/dashboard", status_code=303)
     return templates.TemplateResponse("home.html", {"request": request})
 
 @app.get("/register", response_class=HTMLResponse)
@@ -26,7 +28,10 @@ def show_register(request: Request):
     return templates.TemplateResponse("register.html", {"request": request})
 
 @app.get("/login", response_class=HTMLResponse)
-def show_login(request: Request):
+def show_login(request: Request, user: User = Depends(get_current_user)):
+     # If the gatekeeper didn't find a user, kick them to login
+    if user:
+        return RedirectResponse(url="/dashboard", status_code=303)
     return templates.TemplateResponse("login.html", {"request": request})
 
 @app.get("/dashboard")

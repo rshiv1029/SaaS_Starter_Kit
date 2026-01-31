@@ -1,17 +1,15 @@
 from datetime import datetime, timedelta
 from jose import jwt
 from passlib.context import CryptContext
-
-SECRET_KEY = "your-secret-key" # Move to .env later
-ALGORITHM = "HS256"
+from app.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def create_access_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(days=1)
+    expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
