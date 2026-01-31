@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from jose import jwt, JWTError
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
@@ -8,10 +9,11 @@ from starlette.requests import Request
 
 from app.database import get_db
 from app.models.user import User
+from app.utils.security import create_access_token, hash_password, verify_password
 
 templates = Jinja2Templates(directory="app/templates")
 router = APIRouter()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -21,12 +23,6 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
-
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
 
 @router.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
@@ -105,15 +101,37 @@ def login_page_submit(
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    db_user = db.query(User).filter(User.email == email).first()
-    if not db_user or not verify_password(password, db_user.hashed_password):
+    user = db.query(User).filter(User.email == email).first()
+    if not user or not verify_password(password, user.hashed_password):
         return templates.TemplateResponse("login.html", {
             "request": request,
             "error": "Invalid credentials"
         })
     
+    # Generate JWT token
+    token = create_access_token(data={"sub": user.email})
+    
+    response = RedirectResponse(url="/dashboard", status_code=303)
+    response.set_cookie(
+        key="access_token", 
+        value=f"Bearer {token}", 
+        httponly=True, 
+        maxage=86400
+    )
     # For now, just show dashboard (we'll add proper sessions later)
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request,
-        "user": db_user
-    })
+    return response
+
+def get_current_user(request: Request, db: Session = Depends(get_db)):
+    # Get token from cookie
+    token = request.cookies.get("access_token")
+    if not token:
+        return None # Or raise HTTPException to redirect to login
+    try:
+        # Decode token and remove 'Bearer ' prefix
+        scheme, _, param = token.partition(" ")
+        payload = jwt.decode(param, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            return None
+    except JWTError:
+        return None
