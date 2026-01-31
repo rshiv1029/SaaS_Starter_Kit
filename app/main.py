@@ -27,6 +27,10 @@ async def home(request: Request, user: User = Depends(get_current_user)):
 def show_register(request: Request):
     return templates.TemplateResponse("register.html", {"request": request})
 
+@app.get("/reset-password", response_class=HTMLResponse)
+def show_reset(request: Request):
+    return templates.TemplateResponse("reset_password.html", {"request": request})
+
 @app.get("/login", response_class=HTMLResponse)
 def show_login(request: Request, user: User = Depends(get_current_user)):
      # If the gatekeeper didn't find a user, kick them to login

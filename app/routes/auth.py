@@ -123,6 +123,45 @@ def login_page_submit(
     # For now, just show dashboard (we'll add proper sessions later)
     return response
 
+@router.get("/reset-password", response_class=HTMLResponse)
+def reset_password_page(request: Request):
+    return templates.TemplateResponse("reset-password.html", {"request": request})
+
+@router.post("/reset-password-page")
+def reset_password_submit(
+    request: Request,
+    email: str = Form(...),
+    password: str = Form(...),
+    confirmedPassword: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    # Password validation
+    if password != confirmedPassword:
+        return templates.TemplateResponse("reset_password.html", {
+            "request": request,
+            "error": "Passwords do not match"
+        }, status_code=400)
+
+    # Find the existing user
+    user = db.query(User).filter(User.email == email).first()
+    
+    # If user doesn't exist, handle the error
+    if not user:
+        return templates.TemplateResponse("reset_password.html", {
+            "request": request,
+            "error": "No account found with this email"
+        })
+    
+    # 4. Update the existing user's password
+    # We use security.hash_password (ensure you have it imported)
+    user.hashed_password = hash_password(password)
+    
+    # 5. Commit the changes to the database
+    db.commit()
+    
+    # 6. Redirect to login with a success message (if your login template handles it)
+    return RedirectResponse(url="/login?msg=password_reset_success", status_code=303)
+
 def get_current_user(request: Request, db: Session = Depends(get_db)):
     # Get token from cookie
     token = request.cookies.get("access_token")
