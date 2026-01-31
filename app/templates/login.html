@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "components/form_macro.html" import input %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Sign in to your account
+            </h2>
+        </div>
+        <form class="mt-8 space-y-6" method="POST" action="/auth/login-page">
+            <div class="rounded-md shadow-sm -space-y-px">
+                {{ input('email', 'Email address', type='email') }}
+                {{ input('password', 'Password', type='password') }}
+            </div>
+
+            <div>
+                <button type="submit" 
+                        class="btn-primary">
+                    Sign in
+                </button>
+            </div>
+        </form>
+        
+        <div class="text-center">
+            <p class="text-sm text-gray-600">
+                Don't have an account? 
+                <a href="/register" class="font-medium text-blue-600 hover:text-blue-500">
+                    Sign up
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

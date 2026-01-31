@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-4">
+  <div class="max-w-md w-full text-center space-y-8">
+    <div>
+      <h1 class="text-4xl font-bold text-gray-900">AI SaaS Starter Kit</h1>
+      <p class="mt-4 text-lg text-gray-600">
+        Welcome! This is your AI-powered SaaS application.
+      </p>
+    </div>
+    
+    <div class="space-y-3">
+      <a href="/register" class="block">
+        <button class="btn-primary">Get Started</button>
+      </a>
+      <a href="/login" class="block text-blue-600 hover:text-blue-500 font-medium">
+        Already have an account? Sign in
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

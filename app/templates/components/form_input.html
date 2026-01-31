@@ -1,0 +1,7 @@
+{% macro input(name, placeholder, type='text', required=true) %}
+<div>
+    <input type="{{ type }}" name="{{ name }}" placeholder="{{ placeholder }}" 
+           {% if required %}required{% endif %}
+           class="input-field">
+</div>
+{% endmacro %}
