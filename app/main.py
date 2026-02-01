@@ -9,7 +9,7 @@ from app.models.user import User
 
 templates = Jinja2Templates(directory="app/templates")
 
-# Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="AI SaaS Starter")
 

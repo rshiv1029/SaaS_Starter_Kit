@@ -117,11 +117,13 @@ def login_page_submit(
     response.set_cookie(
         key="access_token", 
         value=f"Bearer {token}", 
-        httponly=True, 
+        httponly=True,
+        secure=not settings.DEBUG,
+        samesite="lax",
         max_age=max_age_seconds
     )
-    # For now, just show dashboard (we'll add proper sessions later)
     return response
+
 
 @router.get("/reset-password", response_class=HTMLResponse)
 def reset_password_page(request: Request):
@@ -135,6 +137,9 @@ def reset_password_submit(
     confirmedPassword: str = Form(...),
     db: Session = Depends(get_db)
 ):
+    # TODO: Add email verification with reset token
+    # Current implementation is for development only
+    
     # Password validation
     if password != confirmedPassword:
         return templates.TemplateResponse("reset_password.html", {
