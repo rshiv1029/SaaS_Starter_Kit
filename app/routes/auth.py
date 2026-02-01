@@ -162,6 +162,12 @@ def reset_password_submit(
     # 6. Redirect to login with a success message (if your login template handles it)
     return RedirectResponse(url="/login?msg=password_reset_success", status_code=303)
 
+@router.get("/logout")
+async def logout():
+    response = RedirectResponse(url="/", status_code=303)
+    response.delete_cookie("access_token")
+    return response
+
 def get_current_user(request: Request, db: Session = Depends(get_db)):
     # Get token from cookie
     token = request.cookies.get("access_token")
