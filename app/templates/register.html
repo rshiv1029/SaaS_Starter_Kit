@@ -1,8 +1,10 @@
 {% extends "base.html" %}
 {% from "components/form_input.html" import input %}
+{% from "components/alerts.html" import alerts %}
 {% block content %}
 <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
+
         <div>
             <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
                 Create your account
@@ -11,6 +13,9 @@
                 Get started with 1,000 free credits
             </p>
         </div>
+
+        {{ alerts(request) }}
+        
         <form class="mt-8 space-y-6" method="POST" action="/auth/register-page">
             <div class="rounded-md shadow-sm -space-y-px">
                 {{ input('full_name', 'Full name') }}

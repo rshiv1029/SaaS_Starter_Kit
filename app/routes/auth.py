@@ -75,10 +75,8 @@ def register_page_submit(
 ):
     db_user = db.query(User).filter(User.email == email).first()
     if db_user:
-        return templates.TemplateResponse("register.html", {
-            "request": request,
-            "error": "Email already registered"
-        })
+        request.session['error'] = "Email already registered"
+        return RedirectResponse(url="/register", status_code=303)
     
     new_user = User(
         email=email,
@@ -89,7 +87,12 @@ def register_page_submit(
     db.add(new_user)
     db.commit()
     
-    return RedirectResponse(url="/login", status_code=303)
+    request.session['success'] = "Account created successfully! Please login."
+    
+    # Explicitly clear any auth cookies to prevent auto-login
+    response = RedirectResponse(url="/login", status_code=303)
+    response.delete_cookie("access_token")
+    return response
 
 @router.get("/login-page", response_class=HTMLResponse)
 def login_page(request: Request):
@@ -104,10 +107,8 @@ def login_page_submit(
 ):
     user = db.query(User).filter(User.email == email).first()
     if not user or not verify_password(password, user.hashed_password):
-        return templates.TemplateResponse("login.html", {
-            "request": request,
-            "error": "Invalid credentials"
-        })
+        request.session['error'] = "Invalid email or password"
+        return RedirectResponse(url="/login", status_code=303)
     
     # Generate JWT token
     token = create_access_token(data={"sub": user.email})
@@ -142,20 +143,16 @@ def reset_password_submit(
     
     # Password validation
     if password != confirmedPassword:
-        return templates.TemplateResponse("reset_password.html", {
-            "request": request,
-            "error": "Passwords do not match"
-        }, status_code=400)
+        request.session['error'] = "Passwords do not match"
+        return RedirectResponse(url="/reset-password", status_code=303)
 
     # Find the existing user
     user = db.query(User).filter(User.email == email).first()
     
     # If user doesn't exist, handle the error
     if not user:
-        return templates.TemplateResponse("reset_password.html", {
-            "request": request,
-            "error": "No account found with this email"
-        })
+        request.session['error'] = "No account found with this email"
+        return RedirectResponse(url="/reset-password", status_code=303)
     
     # 4. Update the existing user's password
     # We use security.hash_password (ensure you have it imported)
@@ -165,10 +162,12 @@ def reset_password_submit(
     db.commit()
     
     # 6. Redirect to login with a success message (if your login template handles it)
-    return RedirectResponse(url="/login?msg=password_reset_success", status_code=303)
+    request.session['success'] = "Password reset successful! You can now login."
+    return RedirectResponse(url="/login", status_code=303)
 
 @router.get("/logout")
-async def logout():
+async def logout(request: Request):
+    request.session['info'] = "You have been logged out successfully"
     response = RedirectResponse(url="/", status_code=303)
     response.delete_cookie("access_token")
     return response
@@ -181,12 +180,14 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
     try:
         # Decode token and remove 'Bearer ' prefix
         scheme, _, param = token.partition(" ")
-        print(param)
+        print(f"DEBUG: Checking token for user. Token exists: {bool(param)}")
         payload = jwt.decode(param, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             return None
         user = db.query(User).filter(User.email == email).first()
+        print(f"DEBUG: User found: {user.email if user else None}")
         return user
-    except JWTError:
+    except JWTError as e:
+        print(f"DEBUG: JWT Error: {e}")
         return None

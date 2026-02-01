@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "components/form_input.html" import input %}
+{% from "components/alerts.html" import alerts %}
 {% block content %}
 <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
@@ -8,6 +9,9 @@
                 Sign in to your account
             </h2>
         </div>
+
+        {{ alerts(request) }}
+
         <form class="mt-8 space-y-6" method="POST" action="/auth/login-page">
             <div class="rounded-md shadow-sm -space-y-px">
                 {{ input('email', 'Email address', type='email') }}

@@ -2,16 +2,21 @@ from fastapi import FastAPI, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.database import Base, engine
 from app.routes.auth import router, get_current_user
 from app.models.user import User
+from app.config import settings
 
 templates = Jinja2Templates(directory="app/templates")
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="AI SaaS Starter")
+
+# Add session middleware for flash messages
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
 app.include_router(router, prefix="/auth", tags=["auth"])
     
